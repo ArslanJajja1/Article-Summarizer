@@ -1,11 +1,27 @@
 import {useState,useEffect} from 'react'
 import {copy,linkIcon,loader,tick} from '../assets' 
+import { useLazyGetSummaryQuery } from '../services/article'
 
 const Demo = () => {
     const [article, setArticle] = useState({url:'',summary:''})
-    const handleSubmit = (e)=>{
+    const [getSummary,{error,isFetching}] = useLazyGetSummaryQuery()
+    const [allArticles,setAllArticles] = useState([])
+    useEffect(()=>{
+        const articlesFromLocalStorage = JSON.parse(localStorage.getItem('articles'))
+        if (articlesFromLocalStorage){
+            setAllArticles(articlesFromLocalStorage)
+        }
+    },[])
+    const handleSubmit = async (e)=>{
         e.preventDefault()
-        alert('submitted : ' , article)
+        const {data} = await getSummary({articleUrl:article.url})
+        if (data?.summary){
+            const newArticle = {...article,summary:data.summary}
+            const updatedAllArticles = [newArticle,...allArticles]
+            setArticle(newArticle)
+            setAllArticles(updatedAllArticles)
+            localStorage.setItem('articles',JSON.stringify(updatedAllArticles))
+        }
     }
   return (
     <section className='mt-16 w-full max-w-full'>
